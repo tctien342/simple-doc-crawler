@@ -22,7 +22,7 @@ export class ParallelCrawler {
     this.config = config;
     this.queue = new PQueue({ concurrency: config.maxConcurrency });
     this.startTime = Date.now();
-    
+
     // Initialize configurable parameters with defaults if not provided
     this.maxUrlsPerDomain = config.maxUrlsPerDomain ?? 200;
     this.timeout = config.requestTimeout ?? 5000;
@@ -79,14 +79,8 @@ export class ParallelCrawler {
           }
         }
 
-        // Wait for the queue with a timeout
-        const queueTimeout = setTimeout(() => {
-          this.stopCrawling('Queue processing timeout');
-        }, 25000); // 25 seconds queue timeout
-
         try {
           await this.queue.onEmpty();
-          clearTimeout(queueTimeout);
         } catch (err) {
           console.log('Queue processing error:', (err as Error).message);
         }
@@ -127,6 +121,8 @@ export class ParallelCrawler {
     baseDomain: string,
     results: PageData[]
   ): Promise<void> {
+    // Clean URL, without query and selectors
+    url = url.split('?')[0].split('#')[0];
     // Check if we should stop
     if (this.shouldStop) {
       return;
