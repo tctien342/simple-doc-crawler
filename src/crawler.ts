@@ -233,6 +233,17 @@ export class ParallelCrawler {
             return false;
           }
         }
+        
+        // Skip URLs that match any of the ignore prefixes (if specified)
+        if (this.config.ignorePrefixes && this.config.ignorePrefixes.length > 0) {
+          const fullUrl = url.toString();
+          const matchesIgnorePrefix = this.config.ignorePrefixes.some(prefix =>
+            fullUrl.startsWith(prefix));
+          
+          if (matchesIgnorePrefix) {
+            return false;
+          }
+        }
 
         return true;
       } catch (e) {
