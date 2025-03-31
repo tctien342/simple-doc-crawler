@@ -1,0 +1,30 @@
+{
+  "name": "doc-crawler",
+  "version": "1.0.0",
+  "description": "A Node.js/TypeScript CLI document crawler and converter",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "doc-export": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "bun build ./src/index.ts --outdir ./dist --target node",
+    "start": "bun run dist/index.js",
+    "dev": "bun run --watch src/index.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "commander": "^11.1.0",
+    "p-queue": "^7.4.1",
+    "turndown": "^7.1.2",
+    "cheerio": "^1.0.0-rc.12",
+    "undici": "^6.3.0",
+    "bloom-filters": "^3.0.0"
+  },
+  "devDependencies": {
+    "bun-types": "latest",
+    "@types/node": "^20.10.5",
+    "@types/turndown": "^5.0.4",
+    "typescript": "^5.3.3"
+  }
+}
