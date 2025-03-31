@@ -1,12 +1,22 @@
 {
-  "name": "doc-crawler",
+  "name": "@saintno/doc-export",
   "version": "1.0.0",
-  "description": "A Node.js/TypeScript CLI document crawler and converter",
+  "description": "A Node.js/TypeScript CLI document crawler and export to markdown.",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "doc-export": "./dist/index.js"
+    "doc-export": "dist/index.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tctien342/simple-doc-crawler.git"
+  },
+  "author": "tctien342",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/tctien342/simple-doc-crawler/issues"
+  },
+  "homepage": "https://github.com/tctien342/simple-doc-crawler#readme",
   "scripts": {
     "build": "bun build ./src/index.ts --outdir ./dist --target node",
     "start": "bun run dist/index.js",
@@ -16,15 +26,14 @@
   "dependencies": {
     "commander": "^11.1.0",
     "p-queue": "^7.4.1",
-    "turndown": "^7.1.2",
-    "cheerio": "^1.0.0-rc.12",
-    "undici": "^6.3.0",
-    "bloom-filters": "^3.0.0"
+    "turndown": "^7.2.0",
+    "cheerio": "^1.0.0",
+    "bloom-filters": "^3.0.4"
   },
   "devDependencies": {
     "bun-types": "latest",
-    "@types/node": "^20.10.5",
-    "@types/turndown": "^5.0.4",
-    "typescript": "^5.3.3"
+    "@types/node": "^20.17.28",
+    "@types/turndown": "^5.0.5",
+    "typescript": "^5.8.2"
   }
 }

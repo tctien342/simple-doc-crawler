@@ -1,4 +1,3 @@
-import { request } from 'undici';
 import * as cheerio from 'cheerio';
 import PQueue from 'p-queue';
 import * as path from 'path';
@@ -228,18 +227,18 @@ export class ParallelCrawler {
           const fullUrl = url.toString();
           const matchesPrefix = this.config.allowedPrefixes.some(prefix =>
             fullUrl.startsWith(prefix));
-          
+
           if (!matchesPrefix) {
             return false;
           }
         }
-        
+
         // Skip URLs that match any of the ignore prefixes (if specified)
         if (this.config.ignorePrefixes && this.config.ignorePrefixes.length > 0) {
           const fullUrl = url.toString();
           const matchesIgnorePrefix = this.config.ignorePrefixes.some(prefix =>
             fullUrl.startsWith(prefix));
-          
+
           if (matchesIgnorePrefix) {
             return false;
           }
@@ -265,7 +264,7 @@ export class ParallelCrawler {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
-      const response = await request(pageUrl, {
+      const response = await fetch(pageUrl, {
         headers: { 'User-Agent': 'Mozilla/5.0 DocCrawler/1.0' },
         signal: controller.signal
       }).catch(err => {
@@ -274,11 +273,11 @@ export class ParallelCrawler {
 
       clearTimeout(timeoutId);
 
-      if (response.statusCode !== 200) {
+      if ("statusCode" in response) {
         return { content: '', links: [] };
       }
 
-      const html = await response.body.text();
+      const html = await response.text();
       if (!html) {
         return { content: '', links: [] };
       }

@@ -1,0 +1,23 @@
+# Source files
+src/
+test/
+tests/
+examples/
+
+# Configuration files
+tsconfig.json
+.eslintrc
+.prettierrc
+.github/
+.vscode/
+.git/
+
+# Build/development tools
+node_modules/
+coverage/
+.nyc_output/
+*.log
+*.tgz
+
+# Environment variables
+.env*

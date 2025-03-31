@@ -13,11 +13,25 @@ A Node.js/TypeScript CLI tool for crawling documentation websites and exporting 
 
 ## Installation
 
-### Prerequisites
+### From npm
+```bash
+# Install globally
+npm install -g @saintno/doc-export
+
+# Or with yarn
+yarn global add @saintno/doc-export
+
+# Or with pnpm
+pnpm add -g @saintno/doc-export
+```
+
+### From source
+
+#### Prerequisites
 
 - [Bun](https://bun.sh/) (v1.0.0 or higher)
 
-### Setup
+#### Setup
 
 1. Clone this repository
 2. Install dependencies:
@@ -37,6 +51,10 @@ bun run build
 Basic usage:
 
 ```bash
+# If installed from npm:
+doc-export --url https://example.com/docs --output ./output
+
+# If running from source:
 bun run start --url https://example.com/docs --output ./output
 ```
 
@@ -57,7 +75,7 @@ bun run start --url https://example.com/docs --output ./output
 ## Example
 
 ```bash
-bun run start --url https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide --output ./javascript-guide --concurrency 3 --max-urls 300 --request-timeout 10000 --max-runtime 60000
+doc-export --url https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide --output ./javascript-guide --concurrency 3 --max-urls 300 --request-timeout 10000 --max-runtime 60000
 ```
 
 This example will:
@@ -73,7 +91,7 @@ This example will:
 To only crawl URLs with specific prefixes:
 
 ```bash
-bun run start --url https://developer.mozilla.org/en-US/docs/Web/JavaScript --output ./javascript-guide --allowed-prefixes https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide,https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference
+doc-export --url https://developer.mozilla.org/en-US/docs/Web/JavaScript --output ./javascript-guide --allowed-prefixes https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide,https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference
 ```
 
 This example will:
