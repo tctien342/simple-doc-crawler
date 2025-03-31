@@ -22,6 +22,19 @@ program
   .option('--max-urls <number>', 'Maximum URLs to crawl per domain', '200')
   .option('--request-timeout <milliseconds>', 'Request timeout in milliseconds', '5000')
   .option('--max-runtime <milliseconds>', 'Maximum crawler run time in milliseconds', '30000')
+  .option('--split-pages <mode>', 'How to split pages: "none" (default), "subdirectories", or "flat"', 'none')
+  .addHelpText('after', `
+Split Pages Modes:
+  - none: All pages combined into a single document.md file (default)
+  - subdirectories: Each page saved as a separate file in a pages/ subdirectory
+  - flat: Each page saved as a separate file in the output directory with domain name in filename
+    (e.g., example_com_page1.md)
+
+Examples:
+  $ bun run src/index.ts --url https://example.com --split-pages none
+  $ bun run src/index.ts --url https://example.com --split-pages subdirectories
+  $ bun run src/index.ts --url https://example.com --split-pages flat
+`)
   .action(async (options) => {
     try {
       console.time('Total execution time');
@@ -33,7 +46,11 @@ program
         outputDir: path.resolve(options.output),
         maxUrlsPerDomain: parseInt(options.maxUrls),
         requestTimeout: parseInt(options.requestTimeout),
-        maxRunTime: parseInt(options.maxRuntime)
+        maxRunTime: parseInt(options.maxRuntime),
+        splitPages: options.splitPages === true ? 'subdirectories' :
+                   (options.splitPages === false ? 'none' :
+                   (options.splitPages === 'true' ? 'subdirectories' :
+                   (options.splitPages === 'false' ? 'none' : options.splitPages)))
       };
 
       // Validate options
@@ -80,7 +97,7 @@ program
 
       // Process HTML to Markdown
       const markdownStartTime = performance.now();
-      const markdownPath = await converter.processPages(pages, config.outputDir);
+      const markdownPath = await converter.processPages(pages, config.outputDir, config.splitPages);
       const markdownDuration = ((performance.now() - markdownStartTime) / 1000).toFixed(1);
 
       // Get markdown file size

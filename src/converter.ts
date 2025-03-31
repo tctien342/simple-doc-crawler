@@ -1,5 +1,5 @@
 import TurndownService from 'turndown';
-import { PageData } from './interfaces.js';
+import { PageData, CrawlerConfig } from './interfaces.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -74,45 +74,203 @@ export class DocumentConverter {
   }
   
   /**
-   * Process a collection of pages into a single document
+   * Process a collection of pages into markdown files
+   * splitPages options:
+   * - 'none': All pages combined into a single document (default)
+   * - 'subdirectories': Each page saved as a separate file in a subdirectory
+   * - 'flat': Each page saved as a separate file in the output directory with folder name in filename
    */
-  public async processPages(pages: PageData[], outputDir: string): Promise<string> {
+  public async processPages(pages: PageData[], outputDir: string, splitPages?: 'none' | 'subdirectories' | 'flat'): Promise<string> {
     // Sort pages (could be enhanced with more sophisticated ordering)
     const sortedPages = [...pages].sort((a, b) => a.url.localeCompare(b.url));
     
-    // Create markdown content with frontmatter
-    let markdownContent = '---\n';
-    markdownContent += 'title: Exported Documentation\n';
-    markdownContent += `date: ${new Date().toISOString()}\n`;
-    markdownContent += `sources: ${pages.length} pages\n`;
-    markdownContent += '---\n\n';
-    
-    // Generate table of contents
-    markdownContent += '# Table of Contents\n\n';
-    for (let i = 0; i < sortedPages.length; i++) {
-      const page = sortedPages[i];
-      const title = page.title || `Page ${i + 1}`;
-      markdownContent += `${i + 1}. [${title}](#${title.toLowerCase().replace(/[^\w]+/g, '-')})\n`;
-    }
-    
-    markdownContent += '\n---\n\n';
-    
-    // Add each page content
-    for (let i = 0; i < sortedPages.length; i++) {
-      const page = sortedPages[i];
-      const title = page.title || `Page ${i + 1}`;
+    // Handle different page splitting options
+    if (splitPages === 'subdirectories' || splitPages === 'flat') {
+      console.log(`Saving ${sortedPages.length} pages as separate markdown files...`);
       
-      markdownContent += `# ${title}\n\n`;
-      markdownContent += `*Source: [${page.url}](${page.url})*\n\n`;
-      markdownContent += this.convertToMarkdown(page.content);
-      markdownContent += '\n\n---\n\n';
+      // Directory setup depends on mode
+      let pagesDir = outputDir;
+      if (splitPages === 'subdirectories') {
+        pagesDir = path.join(outputDir, 'pages');
+        await fs.mkdir(pagesDir, { recursive: true });
+      }
+      
+      // Create an index file with links to all pages
+      let indexContent = '---\n';
+      indexContent += 'title: Exported Documentation Index\n';
+      indexContent += `date: ${new Date().toISOString()}\n`;
+      indexContent += `sources: ${pages.length} pages\n`;
+      indexContent += '---\n\n';
+      indexContent += '# Documentation Index\n\n';
+      
+      // Process pages by folder
+      const pagesByFolder = this.groupPagesByFolder(sortedPages);
+      
+      // Process each folder's pages
+      let pageIndex = 0;
+      for (const [folderName, folderPages] of Object.entries(pagesByFolder)) {
+        const safeFolder = this.sanitizeString(folderName);
+        
+        // Process each page within this folder
+        for (let i = 0; i < folderPages.length; i++) {
+          const page = folderPages[i];
+          const title = page.title || `Page ${pageIndex + 1}`;
+          
+          // Create a filename based on the mode
+          let safeFilename;
+          let pageFilePath;
+          
+          if (splitPages === 'flat') {
+            // For flat mode, include folder name in the filename
+            safeFilename = `${safeFolder}_${this.createSafeFilename(page.url, title, i)}`;
+            pageFilePath = path.join(outputDir, safeFilename);
+            
+            // Add link to index with just the filename
+            indexContent += `${pageIndex + 1}. [${title}](${safeFilename})\n`;
+          } else {
+            // For subdirectories mode
+            safeFilename = this.createSafeFilename(page.url, title, i);
+            pageFilePath = path.join(pagesDir, safeFilename);
+            
+            // Add link to index with the pages/ prefix
+            indexContent += `${pageIndex + 1}. [${title}](pages/${safeFilename})\n`;
+          }
+          
+          // Create individual page content
+          let pageContent = '---\n';
+          pageContent += `title: ${title}\n`;
+          pageContent += `source: ${page.url}\n`;
+          pageContent += `folder: ${folderName}\n`;
+          pageContent += `date: ${new Date().toISOString()}\n`;
+          pageContent += '---\n\n';
+          pageContent += `# ${title}\n\n`;
+          pageContent += `*Source: [${page.url}](${page.url})*\n\n`;
+          pageContent += this.convertToMarkdown(page.content);
+          
+          // Save the page file
+          await fs.writeFile(pageFilePath, pageContent, 'utf-8');
+          
+          pageIndex++;
+        }
+      }
+      
+      // Save the index file
+      const indexPath = path.join(outputDir, 'index.md');
+      await fs.writeFile(indexPath, indexContent, 'utf-8');
+      
+      return indexPath;
+    } else {
+      // Create markdown content with frontmatter for a single combined file
+      let markdownContent = '---\n';
+      markdownContent += 'title: Exported Documentation\n';
+      markdownContent += `date: ${new Date().toISOString()}\n`;
+      markdownContent += `sources: ${pages.length} pages\n`;
+      markdownContent += '---\n\n';
+      
+      // Generate table of contents
+      markdownContent += '# Table of Contents\n\n';
+      for (let i = 0; i < sortedPages.length; i++) {
+        const page = sortedPages[i];
+        const title = page.title || `Page ${i + 1}`;
+        markdownContent += `${i + 1}. [${title}](#${title.toLowerCase().replace(/[^\w]+/g, '-')})\n`;
+      }
+      
+      markdownContent += '\n---\n\n';
+      
+      // Add each page content
+      for (let i = 0; i < sortedPages.length; i++) {
+        const page = sortedPages[i];
+        const title = page.title || `Page ${i + 1}`;
+        
+        markdownContent += `# ${title}\n\n`;
+        markdownContent += `*Source: [${page.url}](${page.url})*\n\n`;
+        markdownContent += this.convertToMarkdown(page.content);
+        markdownContent += '\n\n---\n\n';
+      }
+      
+      // Save the combined markdown file
+      const markdownPath = path.join(outputDir, 'document.md');
+      await fs.writeFile(markdownPath, markdownContent, 'utf-8');
+      
+      return markdownPath;
+    }
+  }
+  
+  /**
+   * Create a safe filename from URL and title
+   */
+  private createSafeFilename(url: string, title: string, index: number): string {
+    // Try to extract a meaningful part from the URL if the title is generic
+    if (title.startsWith('Page ')) {
+      try {
+        const urlObj = new URL(url);
+        const pathParts = urlObj.pathname.split('/').filter(p => p);
+        if (pathParts.length > 0) {
+          const lastPathPart = pathParts[pathParts.length - 1];
+          if (lastPathPart && lastPathPart !== '') {
+            // Clean up common file extensions and use as title
+            title = lastPathPart.replace(/\.(html|htm|php|aspx?)$/i, '');
+          }
+        }
+      } catch (e) {
+        // Fall back to using the index if URL parsing fails
+      }
     }
     
-    // Save the combined markdown file
-    const markdownPath = path.join(outputDir, 'document.md');
-    await fs.writeFile(markdownPath, markdownContent, 'utf-8');
+    // Create a safe filename from the title
+    let safeFilename = title
+      .toLowerCase()
+      .replace(/[^\w]+/g, '-') // Replace non-word chars with hyphens
+      .replace(/-+/g, '-')     // Replace multiple hyphens with single hyphen
+      .replace(/^-|-$/g, '');  // Remove leading/trailing hyphens
     
-    return markdownPath;
+    // If we end up with an empty string, use the index
+    if (!safeFilename || safeFilename === '') {
+      safeFilename = `page-${index + 1}`;
+    }
+    
+    // Add md extension
+    return `${safeFilename}.md`;
+  }
+  
+  /**
+   * Group pages by their URL domain and path (folder)
+   */
+  private groupPagesByFolder(pages: PageData[]): Record<string, PageData[]> {
+    const result: Record<string, PageData[]> = {};
+    
+    for (const page of pages) {
+      try {
+        const url = new URL(page.url);
+        // Use hostname as the folder name, or 'unknown' if it can't be determined
+        const folderName = url.hostname || 'unknown';
+        
+        if (!result[folderName]) {
+          result[folderName] = [];
+        }
+        
+        result[folderName].push(page);
+      } catch (e) {
+        // If URL parsing fails, put in 'unknown' folder
+        if (!result['unknown']) {
+          result['unknown'] = [];
+        }
+        result['unknown'].push(page);
+      }
+    }
+    
+    return result;
+  }
+  
+  /**
+   * Sanitize a string for use in filenames
+   */
+  private sanitizeString(str: string): string {
+    return str
+      .toLowerCase()
+      .replace(/[^\w.]+/g, '_') // Replace non-word chars with underscores
+      .replace(/^_|_$/g, '')    // Remove leading/trailing underscores
+      .replace(/_+/g, '_');     // Replace multiple underscores with single underscore
   }
   
   /**

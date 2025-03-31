@@ -8,6 +8,7 @@ export interface CrawlerConfig {
   maxUrlsPerDomain?: number; // Maximum URLs to crawl per domain
   requestTimeout?: number;   // Request timeout in milliseconds
   maxRunTime?: number;       // Maximum crawler run time in milliseconds
+  splitPages?: 'none' | 'subdirectories' | 'flat';  // How to split pages into markdown files
 }
 
 /**
