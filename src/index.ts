@@ -19,10 +19,11 @@ program
   .requiredOption('-o, --output <output>', 'Output directory for the exported document')
   .option('-c, --concurrency <concurrency>', 'Maximum number of concurrent requests', '5')
   .option('-s, --same-domain', 'Only crawl pages within the same domain', true)
-  .option('--max-urls <number>', 'Maximum URLs to crawl per domain', '200')
+  .option('-m, --max-urls <number>', 'Maximum URLs to crawl per domain', '200')
   .option('--request-timeout <milliseconds>', 'Request timeout in milliseconds', '5000')
   .option('--max-runtime <milliseconds>', 'Maximum crawler run time in milliseconds', '30000')
   .option('--split-pages <mode>', 'How to split pages: "none" (default), "subdirectories", or "flat"', 'none')
+  .option('--allowed-prefixes <prefixes>', 'Comma-separated list of URL prefixes to crawl (e.g., "https://example.com/docs/,https://example.com/guides/")')
   .addHelpText('after', `
 Split Pages Modes:
   - none: All pages combined into a single document.md file (default)
@@ -30,10 +31,15 @@ Split Pages Modes:
   - flat: Each page saved as a separate file in the output directory with domain name in filename
     (e.g., example_com_page1.md)
 
+URL Prefix Filtering:
+  Use --allowed-prefixes to only crawl pages with specific URL prefixes.
+  Multiple prefixes can be specified as a comma-separated list.
+
 Examples:
   $ bun run src/index.ts --url https://example.com --split-pages none
   $ bun run src/index.ts --url https://example.com --split-pages subdirectories
   $ bun run src/index.ts --url https://example.com --split-pages flat
+  $ bun run src/index.ts --url https://example.com --allowed-prefixes https://example.com/docs/,https://example.com/guides/
 `)
   .action(async (options) => {
     try {
@@ -52,6 +58,12 @@ Examples:
                    (options.splitPages === 'true' ? 'subdirectories' :
                    (options.splitPages === 'false' ? 'none' : options.splitPages)))
       };
+
+      // Parse allowed prefixes if provided
+      if (options.allowedPrefixes) {
+        config.allowedPrefixes = options.allowedPrefixes.split(',').map((prefix: string) => prefix.trim());
+        console.log(`Using URL prefix filter: ${config.allowedPrefixes!.join(', ')}`);
+      }
 
       // Validate options
       if (isNaN(config.maxConcurrency) || config.maxConcurrency <= 0) {

@@ -51,6 +51,8 @@ bun run start --url https://example.com/docs --output ./output
 | --max-urls | | Maximum URLs to crawl per domain | 200 |
 | --request-timeout | | Request timeout in milliseconds | 5000 |
 | --max-runtime | | Maximum crawler run time in milliseconds | 30000 |
+| --allowed-prefixes | | Comma-separated list of URL prefixes to crawl | - |
+| --split-pages | | How to split pages: "none", "subdirectories", or "flat" | none |
 
 ## Example
 
@@ -66,11 +68,33 @@ This example will:
 - Set request timeout to 10 seconds (default is 5 seconds)
 - Run the crawler for a maximum of 60 seconds (default is 30 seconds)
 
+### URL Prefix Filtering Example
+
+To only crawl URLs with specific prefixes:
+
+```bash
+bun run start --url https://developer.mozilla.org/en-US/docs/Web/JavaScript --output ./javascript-guide --allowed-prefixes https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide,https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference
+```
+
+This example will:
+- Start crawling from the MDN JavaScript documentation
+- Only process URLs that start with the specified prefixes (Guide and Reference sections)
+- Ignore other URLs even if they are within the same domain
+
 ## How It Works
 
-1. **Crawling Phase**: The tool starts from the provided URL and crawls all linked pages (respecting domain restrictions)
+1. **Crawling Phase**: The tool starts from the provided URL and crawls all linked pages (respecting domain restrictions and URL prefix filters if specified)
 2. **Processing Phase**: Each HTML page is converted to Markdown using Turndown
 3. **Aggregation Phase**: All Markdown content is combined into a single document with a table of contents
+
+### Filtering Options
+
+The crawler supports two types of URL filtering:
+
+1. **Domain Filtering** (`--same-domain`): When enabled, only URLs from the same domain as the starting URL will be crawled.
+2. **Prefix Filtering** (`--allowed-prefixes`): When specified, only URLs that start with one of the provided prefixes will be crawled. This is useful for limiting the crawl to specific sections of a website.
+
+These filters can be combined to precisely target the content you want to extract.
 
 ## Implementation Details
 

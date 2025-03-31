@@ -9,6 +9,7 @@ export interface CrawlerConfig {
   requestTimeout?: number;   // Request timeout in milliseconds
   maxRunTime?: number;       // Maximum crawler run time in milliseconds
   splitPages?: 'none' | 'subdirectories' | 'flat';  // How to split pages into markdown files
+  allowedPrefixes?: string[]; // Only crawl URLs with these prefixes (if provided)
 }
 
 /**

@@ -223,6 +223,17 @@ export class ParallelCrawler {
           return false;
         }
 
+        // Skip URLs that don't match any of the allowed prefixes (if specified)
+        if (this.config.allowedPrefixes && this.config.allowedPrefixes.length > 0) {
+          const fullUrl = url.toString();
+          const matchesPrefix = this.config.allowedPrefixes.some(prefix =>
+            fullUrl.startsWith(prefix));
+          
+          if (!matchesPrefix) {
+            return false;
+          }
+        }
+
         return true;
       } catch (e) {
         return false;
